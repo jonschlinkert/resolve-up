@@ -38,7 +38,6 @@ var generators = resolveup('generator-*', function(segment, fp, stat) {
 });
 ```
 
-
 ## Run tests
 Install dev dependencies:
 
