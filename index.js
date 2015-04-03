@@ -9,11 +9,11 @@
 
 var fs = require('fs');
 var path = require('path');
+var mm = require('micromatch');
 var isGlob = require('is-glob');
 var unique = require('array-unique');
 var root = require('global-modules');
-var mm = require('micromatch');
-
+var win32 = process.platform === 'win32';
 
 /**
  * Return a list of directories that match the given filepath/glob
@@ -26,6 +26,10 @@ var mm = require('micromatch');
  */
 
 module.exports = function matchDirs(pattern, fn) {
+  if (!Array.isArray(pattern) && typeof pattern !== 'string') {
+    throw new Error('resolve-up expects a string or array as the first argument.');
+  }
+
   var dirs = paths(process.cwd());
   var len = dirs.length, i = 0;
   var res = [];
@@ -84,19 +88,18 @@ function paths(cwd) {
   var segs = cwd.split(path.sep);
 
   while (segs.pop()) {
-    res.push(npm(segs.join('/')));
+    res.push((win32 ? '/' : '') + npm(segs.join('/')));
   }
-
   if (process.env.NODE_PATH) {
-    res = res.concat(process.env.NODE_PATH.split(path.sep));
+    var nodePaths = process.env.NODE_PATH.split(path.delimiter);
+    res = res.concat(nodePaths.filter(Boolean));
   } else {
-    if (process.platform === 'win32') {
+    if (win32) {
       res.push(npm(process.env.APPDATA, 'npm'));
     } else {
       res.push(npm('/usr/lib'));
     }
   }
-
   res.push.apply(res, require.main.paths);
   return res;
 }
@@ -116,22 +119,11 @@ function lookup(dir, fn) {
 
   while (len--) {
     var curr = arr[i++];
-    // don't recurse into nested node_modules dirs
-    if (curr.indexOf('node_modules') !== -1) {
-      continue;
-    }
     var fp = path.resolve(dir, curr);
-    // if (isSymlink(fp)) continue;
-
     var stat = tryStat(fp);
     if (fn && !fn(curr, fp, stat)) {
       continue;
     }
-    // recurse into directories
-    if (stat.isDirectory() || isSymlink(fp)) {
-      res.push.apply(res, lookup(fp, fn));
-    }
-    // push remaining dirs and files
     res.push(fp);
   }
   return res;
@@ -152,16 +144,8 @@ function tryReaddir(dir) {
   return [];
 }
 
-function tryLstat(fp) {
-  return tryCatch(fs.lstatSync, fp);
-}
-
 function tryStat(fp) {
   return tryCatch(fs.statSync, fp);
-}
-
-function isSymlink(fp) {
-  return tryLstat(fp).isSymbolicLink();
 }
 
 function tryCatch(fn, fp) {
