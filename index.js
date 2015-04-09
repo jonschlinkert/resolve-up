@@ -105,7 +105,7 @@ function paths(cwd) {
 }
 
 /**
- * Recursively read directories, starting with the given `dir`.
+ * Read directories, starting with the given `dir`.
  *
  * @param  {String} `dir`
  * @param  {Function} `fn`
@@ -145,12 +145,8 @@ function tryReaddir(dir) {
 }
 
 function tryStat(fp) {
-  return tryCatch(fs.statSync, fp);
-}
-
-function tryCatch(fn, fp) {
   try {
-    return fn(fp);
+    return fs.statSync(fp);
   } catch(err) {}
   return false;
 }
