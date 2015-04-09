@@ -1,7 +1,7 @@
 {
   "name": "resolve-up",
   "description": "Resolve paths to globally installed npm modules using glob patterns.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "homepage": "https://github.com/jonschlinkert/resolve-up",
   "author": {
     "name": "Jon Schlinkert",
