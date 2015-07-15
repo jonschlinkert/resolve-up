@@ -1,3 +1,2 @@
-
 var resolveup = require('./');
-console.log(resolveup('*'))
+console.log(resolveup('*'));
