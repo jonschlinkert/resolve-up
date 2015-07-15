@@ -25,18 +25,24 @@ var win32 = process.platform === 'win32';
  * @return {Array}
  */
 
-module.exports = function matchDirs(pattern, fn) {
+module.exports = function matchDirs(pattern, options, fn) {
+  if (typeof options === 'function') {
+    fn = options;
+    options = {};
+  }
+
   if (!Array.isArray(pattern) && typeof pattern !== 'string') {
     throw new Error('resolve-up expects a string or array as the first argument.');
   }
 
+  options = options || {};
   var dirs = paths(process.cwd());
   var len = dirs.length, i = 0;
   var res = [];
 
   var filter = matcher(pattern, fn);
   while (len--) {
-    res.push.apply(res, lookup(dirs[i++], filter));
+    res.push.apply(res, lookup(dirs[i++], options, filter));
   }
   return unique(res);
 };
@@ -56,19 +62,32 @@ module.exports = function matchDirs(pattern, fn) {
  */
 
 function matcher(pattern, fn) {
-  return function filter(segment, fp, stat) {
+  var isArray = Array.isArray(pattern);
+  var isglob = isGlob(pattern);
+
+  return function filter(name, fp, stat) {
     // no files should be returned, only dirs
     if (!stat || !stat.isDirectory()) {
       return false;
     }
+
+    if (isglob === false) {
+      if (pattern.indexOf('/') !== -1) {
+        return pattern === name || unixify(fp).indexOf(pattern) !== -1;
+      }
+      return pattern === name;
+    }
+
     // use the `fn` passed on the args to drill down further
-    if (fn && !fn(segment, fp, stat)) {
+    if (typeof fn === 'function' && fn(name, fp, stat) === false) {
       return false;
     }
+
     // if a glob or array of globs was passed, use it to filter the rest
-    if (Array.isArray(pattern) || isGlob(pattern)) {
-      return mm.any(segment, pattern, {matchBase: true});
+    if (isArray || isglob) {
+      return mm.any(name, pattern, {matchBase: true});
     }
+
     // otherwise, we can assume that `fn` already
     // disqualified unwanted files, so return the rest
     return true;
@@ -112,16 +131,28 @@ function paths(cwd) {
  * @return {Array}
  */
 
-function lookup(dir, fn) {
+function lookup(dir, opts, fn) {
+  if (typeof opts === 'function') {
+    fn = opts;
+    opts = {};
+  }
+
+  opts = opts || {};
   var arr = tryReaddir(dir);
   var len = arr.length, i = 0;
   var res = [];
 
   while (len--) {
-    var curr = arr[i++];
-    var fp = path.resolve(dir, curr);
-    var stat = tryStat(fp);
-    if (fn && !fn(curr, fp, stat)) {
+    var name = arr[i++];
+    var fp = path.resolve(dir, name);
+    var stat;
+    if (opts.symlinks === false || opts.nosymlinks === true) {
+      stat = trylstat(fp);
+      if (stat.isSymbolicLink()) continue;
+    } else {
+      stat = tryStat(fp);
+    }
+    if (fn && !fn(name, fp, stat)) {
       continue;
     }
     res.push(fp);
@@ -137,6 +168,10 @@ function npm(dir) {
   return path.join(dir, 'node_modules');
 }
 
+function unixify(fp) {
+  return fp.split('\\').join('/');
+}
+
 function tryReaddir(dir) {
   try {
     return fs.readdirSync(dir);
@@ -147,6 +182,13 @@ function tryReaddir(dir) {
 function tryStat(fp) {
   try {
     return fs.statSync(fp);
+  } catch(err) {}
+  return false;
+}
+
+function trylstat(fp) {
+  try {
+    return fs.lstatSync(fp);
   } catch(err) {}
   return false;
 }
