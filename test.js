@@ -7,36 +7,39 @@
 
 'use strict';
 
-/* deps: mocha */
+require('mocha');
 var assert = require('assert');
-var should = require('should');
 var resolveUp = require('./');
 
 describe('glob pattern', function () {
   it('should return an array of directories:', function () {
-    resolveUp('*').length.should.not.equal(0);
-    resolveUp('*').should.should.be.an.array;
+    assert(resolveUp('*').length > 0);
+    assert(Array.isArray(resolveUp('*')));
   });
 });
 
 describe('path', function () {
   it('should return an array of directories:', function () {
     console.time('mocha');
-    resolveUp('mocha').should.should.be.an.array;
+    assert(resolveUp('mocha').length > 0);
     console.timeEnd('mocha');
   });
 
   it('should return an array of directories:', function () {
     console.time('nosymlinks');
-    resolveUp('mocha', {nosymlinks: true}).should.should.be.an.array;
+    assert(Array.isArray(resolveUp('mocha', {nosymlinks: true})));
     console.timeEnd('nosymlinks');
   });
 });
 
 describe('errors', function () {
-  it('should throw an error on bad args:', function () {
-    (function () {
+  it('should throw an error on bad args:', function (cb) {
+    try {
       resolveUp();
-    }).should.throw('resolve-up expects a string or array as the first argument.');
+      cb(new Error('expected an error'));
+    } catch (err) {
+      assert.equal(err.message, 'resolve-up expects a string or array as the first argument.');
+      cb();
+    }
   });
 });
