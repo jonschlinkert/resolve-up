@@ -34,7 +34,7 @@ module.exports = function resolveUp(patterns, options, fn) {
   }
 
   options = options || {};
-  var dirs = paths(process.cwd());
+  var dirs = paths(process.cwd()).concat(options.paths || []);
   var len = dirs.length, i = -1;
   var res = [];
 
@@ -51,11 +51,21 @@ module.exports = function resolveUp(patterns, options, fn) {
  */
 
 function resolve(files, opts) {
-  if (opts.realpath === true) return files;
+  var fn = opts.filter || function(fp) {
+    return true;
+  };
+
+  if (opts.realpath === true) {
+    return files.filter(fn);
+  }
 
   var len = files.length;
+  var res = [];
+
   while (len--) {
-    files[len] = path.join(opts.cwd, files[len]);
+    var fp = path.join(opts.cwd, files[len]);
+    if (!fn(fp) || res.indexOf(fp) > -1) continue;
+    res.push(fp);
   }
-  return files;
+  return res;
 }
