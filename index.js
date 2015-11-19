@@ -8,10 +8,7 @@
 'use strict';
 
 var path = require('path');
-var glob = require('matched');
-var isValidGlob = require('is-valid-glob');
-var unique = require('array-unique');
-var paths = require('global-paths');
+var utils = require('./utils');
 
 /**
  * Return a list of directories that match the given filepath/glob
@@ -29,21 +26,21 @@ module.exports = function resolveUp(patterns, options, fn) {
     options = {};
   }
 
-  if (!isValidGlob(patterns)) {
+  if (!utils.isValidGlob(patterns)) {
     throw new Error('resolve-up expects a string or array as the first argument.');
   }
 
-  options = options || {};
-  var dirs = paths(process.cwd()).concat(options.paths || []);
+  var opts = utils.extend({fast: true}, opts);
+  var dirs = utils.paths(opts).concat(opts.paths || []);
   var len = dirs.length, i = -1;
   var res = [];
 
   while (++i < len) {
-    options.cwd = dirs[i];
-    if (!options.cwd) continue;
-    res.push.apply(res, resolve(glob.sync(patterns, options), options));
+    opts.cwd = dirs[i];
+    if (!opts.cwd) continue;
+    res.push.apply(res, resolve(utils.glob.sync(patterns, opts), opts));
   }
-  return unique(res);
+  return utils.unique(res);
 };
 
 /**
