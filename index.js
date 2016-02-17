@@ -9,6 +9,7 @@
 
 var path = require('path');
 var utils = require('./utils');
+var cache = {};
 
 /**
  * Return a list of directories that match the given filepath/glob
@@ -32,13 +33,22 @@ module.exports = function resolveUp(patterns, options, fn) {
 
   var opts = utils.extend({fast: true}, opts);
   var dirs = utils.paths(opts).concat(opts.paths || []);
-  var len = dirs.length, i = -1;
+  var len = dirs.length;
+  var idx = -1;
   var res = [];
 
-  while (++i < len) {
-    opts.cwd = dirs[i];
+  while (++idx < len) {
+    opts.cwd = dirs[idx];
     if (!opts.cwd) continue;
-    res.push.apply(res, resolve(utils.glob.sync(patterns, opts), opts));
+    opts.cwd = path.resolve(opts.cwd);
+    var key = opts.cwd + ':' + patterns;
+    if (cache[key]) {
+      res.push.apply(res, cache[key]);
+    } else {
+      var files = resolve(utils.glob.sync(patterns, opts), opts);
+      cache[key] = files;
+      res.push.apply(res, files);
+    }
   }
   return utils.unique(res);
 };
@@ -57,11 +67,12 @@ function resolve(files, opts) {
   }
 
   var len = files.length;
+  var idx = -1;
   var res = [];
 
-  while (len--) {
-    var fp = path.join(opts.cwd, files[len]);
-    if (!fn(fp) || res.indexOf(fp) > -1) continue;
+  while (++idx < len) {
+    var fp = path.resolve(opts.cwd, files[idx]);
+    if (!fn(fp) || ~res.indexOf(fp)) continue;
     res.push(fp);
   }
   return res;
