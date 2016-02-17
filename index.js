@@ -21,17 +21,12 @@ var cache = {};
  * @return {Array}
  */
 
-module.exports = function resolveUp(patterns, options, fn) {
-  if (typeof options === 'function') {
-    fn = options;
-    options = {};
-  }
-
+module.exports = function resolveUp(patterns, options) {
   if (!utils.isValidGlob(patterns)) {
     throw new Error('resolve-up expects a string or array as the first argument.');
   }
 
-  var opts = utils.extend({fast: true}, opts);
+  var opts = utils.extend({fast: true}, options);
   var dirs = utils.paths(opts).concat(opts.paths || []);
   var len = dirs.length;
   var idx = -1;
