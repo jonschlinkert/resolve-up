@@ -48,7 +48,9 @@
     "package",
     "path",
     "paths",
-    "search"
+    "resolve",
+    "search",
+    "up"
   ],
   "verb": {
     "toc": false,
@@ -61,10 +63,10 @@
     ],
     "related": {
       "list": [
-        "look-up",
-        "global-paths",
         "global-modules",
-        "global-prefix"
+        "global-paths",
+        "global-prefix",
+        "look-up"
       ]
     },
     "reflinks": [
