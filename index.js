@@ -8,7 +8,11 @@
 'use strict';
 
 var path = require('path');
-var utils = require('./utils');
+var isValidGlob = require('is-valid-glob');
+var extend = require('extend-shallow');
+var unique = require('array-unique');
+var paths = require('npm-paths');
+var glob = require('matched');
 var cache = {};
 
 /**
@@ -16,18 +20,23 @@ var cache = {};
  * patterns, optionally using a pre-filter function before matching
  * globs against paths.
  *
+ * ```js
+ * var resolveUp = require('resolve-up');
+ * console.log(resolveUp('generate-*'));
+ * ```
  * @param  {Array|String} `pattern`
  * @param  {Function} `fn` Optional pre-filter function
  * @return {Array}
+ * @api public
  */
 
-module.exports = function resolveUp(patterns, options) {
-  if (!utils.isValidGlob(patterns)) {
+function resolveUp(patterns, options) {
+  if (!isValidGlob(patterns)) {
     throw new Error('resolve-up expects a string or array as the first argument.');
   }
 
-  var opts = utils.extend({fast: true}, options);
-  var dirs = utils.paths(opts).concat(opts.paths || []);
+  var opts = extend({fast: true}, options);
+  var dirs = paths(opts).concat(opts.paths || []);
   var len = dirs.length;
   var idx = -1;
   var res = [];
@@ -36,16 +45,16 @@ module.exports = function resolveUp(patterns, options) {
     opts.cwd = dirs[idx];
     if (!opts.cwd) continue;
     opts.cwd = path.resolve(opts.cwd);
-    var key = opts.cwd + ':' + patterns;
+    var key = opts.cwd + '=' + patterns;
     if (cache[key]) {
       res.push.apply(res, cache[key]);
     } else {
-      var files = resolve(utils.glob.sync(patterns, opts), opts);
+      var files = resolve(glob.sync(patterns, opts), opts);
       cache[key] = files;
       res.push.apply(res, files);
     }
   }
-  return utils.unique(res);
+  return unique(res);
 };
 
 /**
@@ -72,3 +81,9 @@ function resolve(files, opts) {
   }
   return res;
 }
+
+/**
+ * Expose `resolveUp`
+ */
+
+module.exports = resolveUp;

@@ -1,6 +1,6 @@
 {
   "name": "resolve-up",
-  "description": "Resolve paths to globally installed npm modules using glob patterns. Very fast, great for getting paths to yeoman generators, etc.",
+  "description": "Resolve paths to globally installed npm modules using glob patterns. Useful for getting paths to yeoman or Generate generators, etc.",
   "version": "0.5.2",
   "homepage": "https://github.com/jonschlinkert/resolve-up",
   "author": "Jon Schlinkert (https://github.com/jonschlinkert)",
@@ -21,16 +21,16 @@
     "test": "mocha"
   },
   "dependencies": {
-    "array-unique": "^0.2.1",
+    "array-unique": "^0.3.2",
     "extend-shallow": "^2.0.1",
+    "global-modules": "^0.2.3",
     "is-valid-glob": "^0.3.0",
-    "lazy-cache": "^1.0.3",
-    "matched": "^0.4.1",
-    "npm-paths": "^0.1.2"
+    "matched": "^0.4.4",
+    "npm-paths": "^0.1.3"
   },
   "devDependencies": {
-    "gulp-format-md": "^0.1.7",
-    "mocha": "*"
+    "gulp-format-md": "^0.1.12",
+    "mocha": "^3.4.2"
   },
   "keywords": [
     "filepath",
@@ -62,11 +62,12 @@
       "gulp-format-md"
     ],
     "related": {
+      "highlight": "global-paths",
       "list": [
         "global-modules",
         "global-paths",
         "global-prefix",
-        "look-up"
+        "findup-sync"
       ]
     },
     "reflinks": [
